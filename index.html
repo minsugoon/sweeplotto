@@ -1,941 +1,339 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>보이지 않는 타자 연습</title>
-  <style>
-    :root {
-      --bg: #f5f7fb;
-      --card-bg: #ffffff;
-      --accent: #4a6fff;
-      --accent-soft: #e0e6ff;
-      --text-main: #222;
-      --text-sub: #666;
-      --border: #d4d8e5;
-      --radius-lg: 14px;
-      --radius-md: 8px;
-      --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.12);
-      --font-mono: "Fira Code", "Consolas", "SF Mono", monospace;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>안나눔 로또 & 연금복권 생성기</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+        }
 
-    * {
-      box-sizing: border-box;
-    }
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
 
-    body {
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        sans-serif;
-      background: radial-gradient(circle at top, #e5ebff 0, #f5f7fb 55%, #f5f7fb 100%);
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+        .container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
 
-    .container {
-      width: min(960px, 100%);
-      padding: 32px 20px;
-    }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
 
-    .card {
-      background: var(--card-bg);
-      border-radius: 20px;
-      padding: 28px 24px 24px;
-      box-shadow: var(--shadow-soft);
-      border: 1px solid rgba(148, 163, 184, 0.18);
-    }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 800;
+        }
 
-    .hidden {
-      display: none;
-    }
+        .header p {
+            margin: 10px 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+            font-style: italic;
+        }
 
-    h1 {
-      margin: 0 0 8px;
-      font-size: 26px;
-      letter-spacing: -0.02em;
-    }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+        }
 
-    .subtitle {
-      margin: 0 0 24px;
-      font-size: 14px;
-      color: var(--text-sub);
-    }
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
 
-    .layout {
-      display: grid;
-      grid-template-columns: 1.1fr 1fr;
-      gap: 20px;
-    }
+        .tab-btn.active {
+            color: #764ba2;
+            border-bottom: 3px solid #764ba2;
+            background-color: #f9fafb;
+        }
 
-    @media (max-width: 860px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-    }
+        .content {
+            padding: 20px;
+            display: none;
+        }
 
-    .section-title {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: #111827;
-    }
+        .content.active {
+            display: block;
+        }
 
-    .section-title span.badge {
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent);
-      font-weight: 500;
-    }
+        .control-panel {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+            justify-content: center;
+        }
 
-    textarea {
-      width: 100%;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-      padding: 10px 12px;
-      font-size: 14px;
-      resize: vertical;
-      min-height: 80px;
-      line-height: 1.4;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease,
-        background-color 0.15s ease;
-      background: #f9fafb;
-    }
+        select {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: 16px;
+        }
 
-    textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(74, 111, 255, 0.15);
-      background: #ffffff;
-    }
+        .btn-generate {
+            background-color: #764ba2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
 
-    /* 예제 문장 / 입력 영역 높이 */
-    #exampleText {
-      min-height: 590px;
-    }
+        .btn-generate:active {
+            transform: scale(0.95);
+        }
 
-    /* 입력 영역: 높이 + 선택 방지 */
-    #typingArea {
-      min-height: 564px;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-    }
-    /* 혹시 선택이 되더라도 보이지 않도록 selection 색상 투명 처리 */
-    #typingArea::selection {
-      background: transparent;
-      color: transparent;
-    }
-    #typingArea::-moz-selection {
-      background: transparent;
-      color: transparent;
-    }
+        /* 결과 표시 영역 */
+        .result-area {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 100px;
+        }
 
-    .hint {
-      font-size: 12px;
-      color: var(--text-sub);
-      margin-top: 4px;
-    }
+        .game-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            background-color: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            animation: fadeIn 0.5s ease;
+        }
 
-    .controls {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
+        .game-label {
+            font-weight: bold;
+            color: #4b5563;
+            margin-right: 5px;
+            font-size: 14px;
+            /* 너비 수정: 30px -> 40px */
+            width: 40px; 
+            /* 텍스트 줄바꿈 방지 */
+            white-space: nowrap; 
+        }
 
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 8px 15px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.08s ease, box-shadow 0.08s ease,
-        background-color 0.15s ease, color 0.15s ease, opacity 0.1s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-    }
+        .ball {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: white;
+            font-size: 14px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            box-shadow: inset -2px -2px 5px rgba(0,0,0,0.2);
+        }
 
-    button.primary {
-      background: linear-gradient(135deg, #4a6fff, #3754d8);
-      color: #ffffff;
-      box-shadow: 0 8px 18px rgba(59, 130, 246, 0.35);
-    }
+        /* 로또 공 색상 (한국 로또 기준) */
+        .ball-yellow { background-color: #fbc400; color: #333; text-shadow: none;} /* 1-10 */
+        .ball-blue { background-color: #69c8f2; }   /* 11-20 */
+        .ball-red { background-color: #ff7272; }    /* 21-30 */
+        .ball-gray { background-color: #aaaaaa; }   /* 31-40 */
+        .ball-green { background-color: #b0d840; }  /* 41-45 */
+        
+        /* 연금복권 스타일 */
+        .pension-group {
+            padding: 5px 12px;
+            background-color: #333;
+            color: white;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
 
-    button.secondary {
-      background: #eef2ff;
-      color: #1d33a1;
-    }
+        .ball-pension {
+            background-color: white;
+            border: 2px solid #764ba2;
+            color: #764ba2;
+            width: 36px;
+            height: 36px;
+            text-shadow: none;
+        }
 
-    button.ghost {
-      background: transparent;
-      color: var(--text-sub);
-      border-radius: 999px;
-      padding-inline: 10px;
-    }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-    button:disabled {
-      opacity: 0.45;
-      cursor: default;
-      box-shadow: none;
-      transform: none;
-    }
+        .footer {
+            text-align: center;
+            padding: 15px;
+            color: #9ca3af;
+            font-size: 12px;
+            border-top: 1px solid #e5e7eb;
+        }
 
-    button:not(:disabled):active {
-      transform: translateY(1px);
-      box-shadow: none;
-    }
-
-    .typing-wrapper {
-      margin-top: 6px;
-    }
-
-    .textarea-stack {
-      position: relative;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      background: #f9fafb;
-    }
-
-    .textarea-stack textarea {
-      margin: 0;
-      border: none;
-      border-radius: 0;
-      background: transparent;
-      font-family: var(--font-mono);
-      padding: 12px 14px;
-      color: transparent;
-      caret-color: #111827;
-      position: relative;
-      z-index: 1;
-    }
-
-    .textarea-stack textarea::placeholder {
-      color: rgba(148, 163, 184, 0.9);
-    }
-
-    .typing-overlay {
-      position: absolute;
-      inset: 0;
-      padding: 12px 14px;
-      font-family: var(--font-mono);
-      font-size: 14px;
-      line-height: 1.5;
-      color: #111827;
-      pointer-events: none;
-      white-space: pre-wrap;
-      word-break: break-word;
-      overflow: hidden;
-    }
-
-    .typing-label {
-      font-size: 13px;
-      color: var(--text-sub);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 4px;
-    }
-
-    .typing-label span {
-      font-size: 12px;
-      color: #9ca3af;
-    }
-
-    .finish-row {
-      margin-top: 10px;
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .timer-display {
-      font-size: 12px;
-      color: #6b7280;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .results {
-      margin-top: 8px;
-      background: #f9fafb;
-      border-radius: var(--radius-lg);
-      padding: 14px 14px 12px;
-      border: 1px solid #e5e7eb;
-    }
-
-    .results h2 {
-      font-size: 15px;
-      margin: 0 0 8px;
-    }
-
-    .stat-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .stat-card {
-      background: #ffffff;
-      border-radius: 10px;
-      padding: 8px 10px;
-      border: 1px solid #e5e7eb;
-    }
-
-    .stat-label {
-      font-size: 11px;
-      color: #6b7280;
-      margin-bottom: 3px;
-    }
-
-    .stat-value {
-      font-size: 15px;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .stat-sub {
-      font-size: 11px;
-      color: #9ca3af;
-      margin-top: 2px;
-    }
-
-    details.summary-block {
-      margin-top: 4px;
-      font-size: 12px;
-    }
-
-    details.summary-block summary {
-      cursor: pointer;
-      color: #4b5563;
-      padding: 4px 0;
-      list-style: none;
-    }
-
-    details.summary-block summary::marker,
-    details.summary-block summary::-webkit-details-marker {
-      display: none;
-    }
-
-    details.summary-block summary::before {
-      content: "▶";
-      font-size: 10px;
-      display: inline-block;
-      margin-right: 6px;
-      transform: translateY(-1px);
-      color: #9ca3af;
-      transition: transform 0.12s ease;
-    }
-
-    details[open].summary-block summary::before {
-      transform: rotate(90deg) translateY(1px);
-    }
-
-    .text-compare {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 6px;
-    }
-
-    .text-box {
-      background: #ffffff;
-      border-radius: 8px;
-      border: 1px solid #e5e7eb;
-      padding: 6px 8px;
-      font-size: 11px;
-      color: #374151;
-      font-family: var(--font-mono);
-      white-space: pre-wrap;
-      word-break: break-word;
-      min-height: 200px;
-      height: auto;
-      overflow: visible;
-    }
-
-    .text-box-title {
-      font-size: 11px;
-      color: #6b7280;
-      margin-bottom: 3px;
-      font-weight: 600;
-    }
-
-    .pill-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-top: 4px;
-    }
-
-    .pill {
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 999px;
-      border: 1px dashed #d1d5db;
-      color: #6b7280;
-      background: #ffffff;
-    }
-
-    .result-actions {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 14px;
-    }
-
-    .diff-char {
-      color: #dc2626;
-      font-weight: 700;
-    }
-
-    /* 샘플 선택 버튼 영역 */
-    .sample-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .sample-btn {
-      padding: 4px 10px;
-      font-size: 11px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: #f9fafb;
-      color: #374151;
-      cursor: pointer;
-      transition: background-color 0.15s ease, color 0.15s ease,
-        border-color 0.15s ease, transform 0.08s ease;
-    }
-
-    .sample-btn:hover {
-      background: #eef2ff;
-      border-color: #c7d2fe;
-    }
-
-    .sample-btn:active {
-      transform: translateY(1px);
-    }
-  </style>
+    </style>
 </head>
 <body>
-  <div class="container">
-    <!-- 연습 페이지 -->
-    <div id="practicePage" class="card">
-      <h1>보이지 않는 타자 연습</h1>
-      <p class="subtitle">
-        예제 문장은 계속 보이지만, 입력 내용은 첫 단어만 보이고 이후부터는 숨겨지는
-        타자 연습 게임입니다.
-      </p>
 
-      <div class="layout">
-        <!-- 예제 문장 영역 -->
-        <section>
-          <div class="section-title">
-            예제 문장
-            <span class="badge">편집 가능</span>
-          </div>
-
-          <!-- 샘플 선택 버튼 -->
-          <div class="sample-buttons">
-            <button type="button" class="sample-btn" data-sample-id="anthem">
-              애국가
-            </button>
-            <button type="button" class="sample-btn" data-sample-id="night">
-              별 헤는 밤
-            </button>
-            <button type="button" class="sample-btn" data-sample-id="hunmin">
-              훈민정음
-            </button>
-          </div>
-
-          <textarea id="exampleText">
-타자 연습을 시작하면 첫 번째 단어만 보이고, 그 이후부터는 보이지 않습니다. 
-내가 정확하게 입력했다고 생각되면 &quot;완료&quot; 버튼을 눌러 결과를 확인해 보세요.</textarea>
-          <p class="hint">
-            블로그 글, 뉴스 기사, 영어 문장 등 직접 연습하고 싶은 문장으로 자유롭게 바꿔도 됩니다.
-          </p>
-        </section>
-
-        <!-- 타이핑 영역 -->
-        <section>
-          <div class="section-title">
-            연습 영역
-            <span class="badge">히든 타이핑</span>
-          </div>
-
-          <div class="controls">
-            <button id="startBtn" class="primary">
-              연습 시작
-            </button>
-            <button id="resetBtn" class="secondary" disabled>
-              초기화
-            </button>
-            <button id="helpBtn" class="ghost" type="button">
-              도움말
-            </button>
-          </div>
-
-          <div class="typing-wrapper">
-            <div class="typing-label">
-              <span>입력 영역</span>
-              <span>· 첫 단어만 화면에 표시, 이후 입력은 숨김</span>
-            </div>
-
-            <div class="textarea-stack">
-              <textarea
-                id="typingArea"
-                placeholder="[연습 시작] 버튼을 누른 뒤 예제 문장을 그대로 타이핑해 보세요."
-                disabled
-              ></textarea>
-              <div id="typingOverlay" class="typing-overlay"></div>
-            </div>
-
-            <div class="finish-row">
-              <div class="timer-display" id="timerDisplay">
-                대기 중
-              </div>
-              <button id="finishBtn" class="primary" disabled>
-                완료
-              </button>
-            </div>
-          </div>
-        </section>
-      </div>
+<div class="container">
+    <div class="header">
+        <h1>안나눔 Lotto 6/45</h1>
+        <p>"절반은 내꺼, 남은 절반도 내꺼"</p>
     </div>
 
-    <!-- 결과 페이지 -->
-    <div id="resultSection" class="card hidden">
-      <h1>연습 결과</h1>
-      <p class="subtitle">
-        정확도는 <b>공백과 특수문자를 제외한 문자</b> 기준으로 계산합니다.
-        (한글·영문·숫자만 비교)
-      </p>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('lotto')">로또 6/45</button>
+        <button class="tab-btn" onclick="switchTab('pension')">연금복권 720+</button>
+    </div>
 
-      <div class="results">
-        <h2>요약</h2>
-        <div class="stat-grid">
-          <div class="stat-card">
-            <div class="stat-label">연습 시간</div>
-            <div class="stat-value" id="timeStat">0.0초</div>
-            <div class="stat-sub">시작 ~ 완료까지 경과 시간</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">정확도</div>
-            <div class="stat-value" id="accuracyStat">0%</div>
-            <div class="stat-sub" id="errorStat">
-              정답 문자 / 전체 문자 수 (공백·특수문자 제외)
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">입력 속도 (CPM)</div>
-            <div class="stat-value" id="cpmStat">0</div>
-            <div class="stat-sub">Characters Per Minute (전체 입력 문자 기준)</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">입력 속도 (WPM)</div>
-            <div class="stat-value" id="wpmStat">0</div>
-            <div class="stat-sub">Words Per Minute (5자 = 1단어)</div>
-          </div>
+    <!-- 로또 탭 -->
+    <div id="lotto" class="content active">
+        <div class="control-panel">
+            <select id="gameCount">
+                <option value="1">1 게임 (1,000원)</option>
+                <option value="2">2 게임 (2,000원)</option>
+                <option value="3">3 게임 (3,000원)</option>
+                <option value="4">4 게임 (4,000원)</option>
+                <option value="5" selected>5 게임 (5,000원)</option>
+            </select>
+            <button class="btn-generate" onclick="generateLotto()">번호 생성</button>
         </div>
-
-        <!-- 기본으로 펼쳐진 상태 (open) -->
-        <details class="summary-block" open>
-          <summary>입력한 내용과 원문 비교 보기</summary>
-          <div class="pill-row">
-            <span class="pill" id="lengthStatPill">
-              원문 0자 · 입력 0자 (공백·특수문자 제외)
-            </span>
-          </div>
-          <div class="text-compare">
-            <div>
-              <div class="text-box-title">원문</div>
-              <pre id="examplePreview" class="text-box"></pre>
+        <div id="lottoResult" class="result-area">
+            <div style="text-align: center; color: #9ca3af; padding: 20px;">
+                구매 금액을 선택하고<br>생성 버튼을 눌러주세요!
             </div>
-            <div>
-              <div class="text-box-title">내가 입력한 내용</div>
-              <pre id="typedPreview" class="text-box"></pre>
-            </div>
-          </div>
-        </details>
-      </div>
-
-      <div class="result-actions">
-        <button id="restartBtn" class="primary">
-          다시하기
-        </button>
-      </div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    const practicePage = document.getElementById("practicePage");
-    const resultSection = document.getElementById("resultSection");
+    <!-- 연금복권 탭 -->
+    <div id="pension" class="content">
+        <div class="control-panel">
+            <span style="font-weight: bold; color: #4b5563;">1세트 (1,000원)</span>
+            <button class="btn-generate" onclick="generatePension()">번호 생성</button>
+        </div>
+        <div id="pensionResult" class="result-area">
+             <div style="text-align: center; color: #9ca3af; padding: 20px;">
+                매달 700만원의 행운을<br>확인해보세요!
+            </div>
+        </div>
+    </div>
 
-    const exampleTextEl = document.getElementById("exampleText");
-    const typingAreaEl = document.getElementById("typingArea");
-    const typingOverlayEl = document.getElementById("typingOverlay");
+    <div class="footer">
+        Based on Excel Algorithm | 당첨 기원 🙏
+    </div>
+</div>
 
-    const startBtn = document.getElementById("startBtn");
-    const finishBtn = document.getElementById("finishBtn");
-    const resetBtn = document.getElementById("resetBtn");
-    const helpBtn = document.getElementById("helpBtn");
-    const restartBtn = document.getElementById("restartBtn");
-    const timerDisplay = document.getElementById("timerDisplay");
-
-    const timeStat = document.getElementById("timeStat");
-    const accuracyStat = document.getElementById("accuracyStat");
-    const errorStat = document.getElementById("errorStat");
-    const cpmStat = document.getElementById("cpmStat");
-    const wpmStat = document.getElementById("wpmStat");
-    const examplePreview = document.getElementById("examplePreview");
-    const typedPreview = document.getElementById("typedPreview");
-    const lengthStatPill = document.getElementById("lengthStatPill");
-
-    // 샘플 버튼
-    const sampleButtons = document.querySelectorAll(".sample-btn");
-
-    // 샘플 텍스트
-    const samples = {
-      anthem: `동해 물과 백두산이 마르고 닳도록 하느님이 보우하사 우리나라 만세
-남산 위의 저 소나무 철갑을 두른 듯 바람 서리 불변함은 우리 기상일세
-가을 하늘 공활한데 높고 구름 없이 밝은 달은 우리 가슴 일편단심일세
-이 기상과 이 맘으로 충성을 다하여 괴로우나 즐거우나 나라 사랑하세
-무궁화 삼천리 화려 강산 대한 사람 대한으로 길이 보전하세`,
-
-      night: `어머님, 나는 별 하나에 아름다운 말 한마디씩 불러 봅니다. 소학교 때 책상을 같이 했던 아이들의 이름과, 패, 경, 옥, 이런 이국 소녀들의 이름과, 벌써 아기 어머니 된 계집애들의 이름과, 가난한 이웃 사람들의 이름과, 비둘기, 강아지, 토끼, 노새, 노루, '프랑시스 잠', '라이너 마리아 릴케' 이런 시인의 이름을 불러 봅니다.`,
-
-      hunmin: `나라의 말이 중국과 달라 문자와 서로 통하지 아니하니, 
-이런 까닭으로 어리석은 백성이 이르고자 할 바가 있어도 
-마침내 제 뜻을 능히 펴지 못할 사람이 많으니라.
-내가 이를 위하여 가엾이 여겨 새로 스물여덟 자를 만드노니 
-사람마다 하여금 쉬이 익혀 날로 쓰는 데 편하게 하고자 할 따름이니라.`
-    };
-
-    let isRunning = false;
-    let startTime = null;
-    let timerIntervalId = null;
-
-    // 화면에 보이는 용: 줄바꿈 통일 + 양끝 공백 제거
-    function normalizeForDisplay(str) {
-      return str.replace(/\r\n/g, "\n").trim();
+<script>
+    // 탭 전환 함수
+    function switchTab(tabName) {
+        document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(tabName).classList.add('active');
+        event.target.classList.add('active');
     }
 
-    // 정확도 계산 용: 공백/특수문자/엔터 제거, 한글/영문/숫자만 남기기
-    function normalizeForAccuracy(str) {
-      return str
-        .replace(/\r\n/g, "\n")
-        // 한글, 영문, 숫자만 남기고 나머지(공백/특수문자/엔터 등)는 삭제
-        .replace(/[^\p{L}\p{N}]/gu, "")
-        .trim();
-    }
+    // 로또 번호 생성 함수
+    function generateLotto() {
+        const count = parseInt(document.getElementById('gameCount').value);
+        const resultDiv = document.getElementById('lottoResult');
+        resultDiv.innerHTML = ''; // 초기화
 
-    function formatNumber(num, digits = 1) {
-      return num.toLocaleString("ko-KR", {
-        maximumFractionDigits: digits,
-        minimumFractionDigits: digits,
-      });
-    }
+        const labels = ['A', 'B', 'C', 'D', 'E'];
 
-    function resetAll() {
-      isRunning = false;
-      startTime = null;
-      if (timerIntervalId) {
-        clearInterval(timerIntervalId);
-        timerIntervalId = null;
-      }
+        for (let i = 0; i < count; i++) {
+            // 1~45 숫자 배열 생성 및 섞기
+            let numbers = [];
+            for (let j = 1; j <= 45; j++) numbers.push(j);
+            
+            // 피셔-예이츠 셔플 (무작위 섞기)
+            for (let k = numbers.length - 1; k > 0; k--) {
+                const randomIdx = Math.floor(Math.random() * (k + 1));
+                [numbers[k], numbers[randomIdx]] = [numbers[randomIdx], numbers[k]];
+            }
 
-      typingAreaEl.value = "";
-      typingOverlayEl.textContent = "";
-      typingAreaEl.disabled = true;
-      finishBtn.disabled = true;
-      startBtn.disabled = false;
-      resetBtn.disabled = true;
-      timerDisplay.textContent = "대기 중";
-    }
+            // 앞에서 6개 자르고 정렬
+            const winNumbers = numbers.slice(0, 6).sort((a, b) => a - b);
 
-    function updateOverlay(value) {
-      const idx = value.indexOf(" ");
-      if (idx === -1) {
-        typingOverlayEl.textContent = value;
-      } else {
-        typingOverlayEl.textContent = value.slice(0, idx);
-      }
-    }
+            // HTML 생성
+            const row = document.createElement('div');
+            row.className = 'game-row';
+            
+            let html = `<span class="game-label">${labels[i]} 자 동</span>`;
+            
+            winNumbers.forEach(num => {
+                let colorClass = '';
+                if (num <= 10) colorClass = 'ball-yellow';
+                else if (num <= 20) colorClass = 'ball-blue';
+                else if (num <= 30) colorClass = 'ball-red';
+                else if (num <= 40) colorClass = 'ball-gray';
+                else colorClass = 'ball-green';
 
-    function startTimer() {
-      if (timerIntervalId) {
-        clearInterval(timerIntervalId);
-      }
-      timerIntervalId = setInterval(() => {
-        if (!isRunning || !startTime) return;
-        const now = performance.now();
-        const elapsedSec = (now - startTime) / 1000;
-        timerDisplay.textContent = `진행 중: ${formatNumber(
-          elapsedSec,
-          1
-        )}초`;
-      }, 100);
-    }
+                html += `<div class="ball ${colorClass}">${num}</div>`;
+            });
 
-    // HTML escape
-    function encodeHTML(str) {
-      return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-    }
-
-    // 글자(한글/영문/숫자) 기준으로만 오타를 체크해서 빨간색 bold 표시
-    function buildDiffHtml(exampleDisplay, typedDisplay, exampleAcc, typedAcc) {
-      let result = "";
-      let letterIndex = 0; // 글자 전용 인덱스
-
-      for (let i = 0; i < typedDisplay.length; i++) {
-        const ch = typedDisplay[i];
-        const enc = encodeHTML(ch);
-
-        // 글자(한글/영문/숫자)인지 확인
-        if (/[\p{L}\p{N}]/u.test(ch)) {
-          const tLetter = typedAcc[letterIndex] ?? "";
-          const eLetter = exampleAcc[letterIndex] ?? "";
-
-          // 원문에 해당 글자 위치가 없거나, 글자가 다르면 오타로 처리
-          if (!eLetter || tLetter !== eLetter) {
-            result += `<span class="diff-char">${enc}</span>`;
-          } else {
-            result += enc;
-          }
-
-          letterIndex++;
-        } else {
-          // 공백, 특수문자, 엔터 등은 그대로 출력 (오타 체크 대상에서 제외)
-          result += enc;
+            row.innerHTML = html;
+            resultDiv.appendChild(row);
         }
-      }
-
-      return result;
     }
 
-    // 정확도: 공백/특수문자/엔터를 제외한 "글자"만 비교
-    // 속도: 전체 입력 문자(공백/특수문자 포함) 기준
-    function calculateStats(exampleAcc, typedAcc, typedAll, durationSec) {
-      const maxLen = Math.max(exampleAcc.length, typedAcc.length);
-      let correct = 0;
+    // 연금복권 번호 생성 함수
+    function generatePension() {
+        const resultDiv = document.getElementById('pensionResult');
+        resultDiv.innerHTML = '';
 
-      for (let i = 0; i < maxLen; i++) {
-        if (exampleAcc[i] === typedAcc[i]) {
-          correct++;
+        // 조 생성 (1~5조)
+        const group = Math.floor(Math.random() * 5) + 1;
+        
+        // 6자리 번호 생성 (0~9 중복 가능)
+        let numbers = [];
+        for(let i=0; i<6; i++) {
+            numbers.push(Math.floor(Math.random() * 10));
         }
-      }
 
-      const accuracy = maxLen === 0 ? 0 : (correct / maxLen) * 100;
+        const row = document.createElement('div');
+        row.className = 'game-row';
+        row.style.justifyContent = 'center';
 
-      const charsForSpeed = typedAll.length;
-      const minutes = durationSec > 0 ? durationSec / 60 : 1 / 60;
-      const cpm = charsForSpeed / minutes;
-      const wpm = (charsForSpeed / 5) / minutes;
+        let html = `<span class="pension-group">${group}조</span>`;
+        
+        numbers.forEach(num => {
+            html += `<div class="ball ball-pension">${num}</div>`;
+        });
 
-      return {
-        accuracy,
-        correct,
-        total: maxLen,
-        charsForSpeed,
-        cpm,
-        wpm,
-      };
+        row.innerHTML = html;
+        resultDiv.appendChild(row);
     }
+</script>
 
-    function showResults(exampleRaw, typedRaw, durationSec) {
-      // 화면 표시용
-      const exampleDisplay = normalizeForDisplay(exampleRaw);
-      const typedDisplay = normalizeForDisplay(typedRaw);
-
-      // 정확도 계산용 (공백/특수문자/엔터 제거)
-      const exampleAcc = normalizeForAccuracy(exampleRaw);
-      const typedAcc = normalizeForAccuracy(typedRaw);
-
-      // 속도 계산용: 전체 입력 문자 기준
-      const typedAll = typedDisplay;
-
-      const stats = calculateStats(
-        exampleAcc,
-        typedAcc,
-        typedAll,
-        durationSec
-      );
-
-      const timeLabel = durationSec.toLocaleString("ko-KR", {
-        maximumFractionDigits: 1,
-        minimumFractionDigits: 1,
-      });
-
-      timeStat.textContent = `${timeLabel}초`;
-      accuracyStat.textContent = `${formatNumber(stats.accuracy, 1)}%`;
-      errorStat.textContent = `${stats.correct} / ${
-        stats.total
-      } 문자 일치 (공백·특수문자·엔터 제외)`;
-      cpmStat.textContent = Math.round(stats.cpm).toLocaleString("ko-KR");
-      wpmStat.textContent = Math.round(stats.wpm).toLocaleString("ko-KR");
-
-      lengthStatPill.textContent = `원문 ${exampleAcc.length}자 · 입력 ${typedAcc.length}자 (공백·특수문자·엔터 제외)`;
-
-      // 원문은 그대로 표시
-      examplePreview.textContent = exampleDisplay;
-      // 내가 입력한 내용: 글자 기준 diff 하이라이트 적용
-      typedPreview.innerHTML = buildDiffHtml(
-        exampleDisplay,
-        typedDisplay,
-        exampleAcc,
-        typedAcc
-      );
-
-      // 페이지 전환
-      practicePage.classList.add("hidden");
-      resultSection.classList.remove("hidden");
-    }
-
-    // 이벤트 바인딩
-    startBtn.addEventListener("click", () => {
-      practicePage.classList.remove("hidden");
-      resultSection.classList.add("hidden");
-
-      resetAll();
-      isRunning = true;
-      typingAreaEl.disabled = false;
-      typingAreaEl.focus();
-      startBtn.disabled = true;
-      finishBtn.disabled = false;
-      resetBtn.disabled = false;
-
-      typingAreaEl.value = "";
-      typingOverlayEl.textContent = "";
-
-      startTime = performance.now();
-      timerDisplay.textContent = "진행 중: 0.0초";
-      startTimer();
-    });
-
-    finishBtn.addEventListener("click", () => {
-      if (!isRunning || !startTime) return;
-
-      const endTime = performance.now();
-      const durationSec = (endTime - startTime) / 1000;
-
-      isRunning = false;
-      typingAreaEl.disabled = true;
-      finishBtn.disabled = true;
-      startBtn.disabled = false;
-
-      if (timerIntervalId) {
-        clearInterval(timerIntervalId);
-        timerIntervalId = null;
-      }
-
-      showResults(exampleTextEl.value, typingAreaEl.value, durationSec);
-    });
-
-    resetBtn.addEventListener("click", () => {
-      resetAll();
-    });
-
-    restartBtn.addEventListener("click", () => {
-      resultSection.classList.add("hidden");
-      practicePage.classList.remove("hidden");
-      resetAll();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-
-    helpBtn.addEventListener("click", () => {
-      alert(
-        [
-          "보이지 않는 타자 연습 사용 방법",
-          "",
-          "1) 위쪽 ‘예제 문장’을 원하는 문장으로 수정하거나, 샘플 버튼(애국가/별 헤는 밤/훈민정음)을 선택합니다.",
-          "2) [연습 시작] 버튼을 누릅니다.",
-          "3) 아래 입력 영역에 예제 문장을 그대로 타이핑합니다.",
-          "   - 첫 번째 단어까지는 입력 내용이 보여집니다.",
-          "   - 첫 번째 공백(띄어쓰기) 이후부터는 내가 타이핑해도 화면에는 보이지 않습니다.",
-          "4) 예제 문장을 모두 입력했다고 생각되면 [완료] 버튼을 누릅니다.",
-          "5) 결과 페이지에서 연습 시간, 정확도, 속도(CPM/WPM), 오타를 확인합니다.",
-          "   - ‘내가 입력한 내용’에서 원문과 다른 글자는 (공백/특수문자/엔터를 제외한) 글자 기준으로 빨간색 볼드로 표시됩니다.",
-          "6) [다시하기] 버튼을 누르면 다시 연습 화면으로 돌아갑니다.",
-          "",
-          "※ 정확도와 오타 표시는 공백·특수문자·엔터를 모두 제외한 ‘글자(한글·영문·숫자)’만 기준으로 계산합니다.",
-        ].join("\n")
-      );
-    });
-
-    typingAreaEl.addEventListener("input", (e) => {
-      updateOverlay(e.target.value);
-    });
-
-    // 입력 영역: 드래그 선택 방지
-    typingAreaEl.addEventListener("selectstart", (e) => {
-      e.preventDefault();
-    });
-
-    // 입력 영역: Ctrl+A/C/X/V 등 차단 (포커스가 이 안에 있을 때)
-    typingAreaEl.addEventListener("keydown", (e) => {
-      if (e.ctrlKey || e.metaKey) {
-        const k = e.key.toLowerCase();
-        if (["a", "c", "x", "v"].includes(k)) {
-          e.preventDefault();
-        }
-      }
-    });
-
-    // 입력 영역: copy / cut / paste 이벤트 직접 차단
-    ["copy", "cut", "paste"].forEach((evt) => {
-      typingAreaEl.addEventListener(evt, (e) => {
-        if (isRunning) {
-          e.preventDefault();
-        }
-      });
-    });
-
-    // 히든 타이핑 중 전체 페이지에서 Ctrl+A/C/X/V 차단
-    document.addEventListener("keydown", (e) => {
-      if (!isRunning) return;
-      if (e.ctrlKey || e.metaKey) {
-        const k = e.key.toLowerCase();
-        if (["a", "c", "x", "v"].includes(k)) {
-          e.preventDefault();
-        }
-      }
-    });
-
-    // 샘플 버튼 클릭 시 예제 문장 교체
-    sampleButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const id = btn.dataset.sampleId;
-        const text = samples[id];
-        if (text) {
-          exampleTextEl.value = text;
-        }
-      });
-    });
-
-    // 마우스 오른쪽 버튼(컨텍스트 메뉴) 전체 페이지에서 비활성화
-    document.addEventListener("contextmenu", (e) => {
-      e.preventDefault();
-    });
-
-    // 초기화
-    resetAll();
-  </script>
 </body>
 </html>
