@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>바이브 오목 (AI & 타이머)</title>
+    <title>바이브 오목 (19x19 & Exact 5)</title>
     <style>
         body {
             font-family: 'Pretendard', sans-serif;
@@ -181,19 +181,19 @@
 </head>
 <body>
 
-    <h1>바이브 오목</h1>
+    <h1>바이브 오목 (19줄)</h1>
     
     <div class="status-bar">
         <div class="turn-info">
             <span id="turnIndicator" class="turn-indicator black-turn"></span>
             <span id="statusText">설정 대기 중...</span>
         </div>
-        <div class="timer" id="timerDisplay">60s</div>
+        <div class="timer" id="timerDisplay">30s</div>
     </div>
 
     <div class="board-container">
         <div class="board-wrapper">
-            <canvas id="omokBoard" width="450" height="450"></canvas>
+            <canvas id="omokBoard" width="600" height="600"></canvas>
         </div>
         
         <!-- 설정 모달 -->
@@ -238,16 +238,20 @@
         const timerDisplay = document.getElementById('timerDisplay');
 
         // 게임 설정 상수
-        const BOARD_SIZE = 15;
+        const BOARD_SIZE = 19;
         const CELL_SIZE = 30;
-        const PADDING = 15;
-        const TIME_LIMIT = 60; // 60초 제한
+        const PADDING = 30; 
+        const TIME_LIMIT = 30; // 30초로 변경
         
         // 상태 변수
         let board = []; 
         let currentPlayer = 1; // 1: 흑, 2: 백
         let gameActive = false;
-        let players = { 1: 'human', 2: 'human' }; // 플레이어 설정
+        let players = { 1: 'human', 2: 'human' };
+
+        // 애니메이션 변수
+        let animatingStone = null; // {x, y, player, startTime}
+        let animationFrameId = null;
 
         // 타이머 변수
         let timeLeft = TIME_LIMIT;
@@ -281,26 +285,23 @@
             board = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
             currentPlayer = 1;
             gameActive = true;
+            animatingStone = null;
             updateStatus("흑돌 차례입니다");
-            drawBoard();
             
-            // 첫 턴 처리
+            drawBoard();
             processTurn();
         }
 
-        // 턴 처리 (타이머 리셋 및 AI 체크)
+        // 턴 처리
         function processTurn() {
             if (!gameActive) return;
 
-            // 타이머 리셋
             stopTimer();
             startTimer();
 
-            // 현재 턴 플레이어 확인
             const type = players[currentPlayer];
 
             if (type === 'ai') {
-                // AI 턴일 경우 클릭 방지하고 잠시 후 착수
                 canvas.style.cursor = 'wait';
                 setTimeout(makeAiMove, 700);
             } else {
@@ -338,7 +339,7 @@
         function updateTimerDisplay() {
             timerDisplay.textContent = `${timeLeft}s`;
             if (timeLeft <= 10) {
-                timerDisplay.style.color = '#dc2626'; // 빨간색 강조
+                timerDisplay.style.color = '#dc2626';
                 timerDisplay.style.fontWeight = '900';
             } else {
                 timerDisplay.style.color = '#1f2937';
@@ -346,21 +347,53 @@
             }
         }
 
-        // 보드 그리기 (전체)
+        // ==========================================
+        //  그래픽 & 애니메이션
+        // ==========================================
+
         function drawBoard() {
             drawBoardBackground();
-            // 돌 그리기
+
             for (let y = 0; y < BOARD_SIZE; y++) {
                 for (let x = 0; x < BOARD_SIZE; x++) {
                     if (board[y][x] !== 0) {
-                        drawStone(x, y, board[y][x]);
+                        if (animatingStone && animatingStone.x === x && animatingStone.y === y) {
+                            continue; 
+                        }
+                        drawStone(x, y, board[y][x], 1.0); 
                     }
                 }
+            }
+
+            if (animatingStone) {
+                const elapsed = Date.now() - animatingStone.startTime;
+                const duration = 200; 
+                let progress = elapsed / duration;
+                
+                const stoneToDraw = animatingStone;
+
+                if (progress > 1) {
+                    progress = 1;
+                    animatingStone = null; 
+                    cancelAnimationFrame(animationFrameId); 
+                } else {
+                    animationFrameId = requestAnimationFrame(drawBoard);
+                }
+
+                let scale = 1.5 - (0.5 * progress); 
+                
+                ctx.globalAlpha = Math.min(1, progress * 1.5);
+                drawStone(stoneToDraw.x, stoneToDraw.y, stoneToDraw.player, scale);
+                ctx.globalAlpha = 1.0;
             }
         }
 
         function drawBoardBackground() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = "#dcb35c";
+            ctx.fillRect(0,0,canvas.width, canvas.height);
+
             ctx.beginPath();
             ctx.lineWidth = 1;
             ctx.strokeStyle = '#000';
@@ -373,7 +406,7 @@
             }
             ctx.stroke();
 
-            const dots = [3, 7, 11];
+            const dots = [3, 9, 15];
             ctx.fillStyle = '#000';
             dots.forEach(x => {
                 dots.forEach(y => {
@@ -384,13 +417,13 @@
             });
         }
 
-        function drawStone(x, y, player) {
+        function drawStone(x, y, player, scale = 1.0) {
             const centerX = PADDING + x * CELL_SIZE;
             const centerY = PADDING + y * CELL_SIZE;
-            const radius = CELL_SIZE / 2 - 2;
+            const radius = (CELL_SIZE / 2 - 2) * scale;
 
             ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY, Math.max(0, radius), 0, Math.PI * 2);
 
             const gradient = ctx.createRadialGradient(
                 centerX - radius/3, centerY - radius/3, radius/10,
@@ -405,14 +438,24 @@
                 gradient.addColorStop(1, '#ddd');
             }
 
+            const shadowOffset = 2 * scale;
+            const shadowBlur = 4 * scale;
+
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = shadowBlur;
+            ctx.shadowOffsetX = shadowOffset;
+            ctx.shadowOffsetY = shadowOffset;
+            
             ctx.fillStyle = gradient;
             ctx.fill();
+            ctx.restore();
         }
 
-        // 클릭 이벤트 처리 (사람만 가능)
+        // 클릭 이벤트
         canvas.addEventListener('click', (e) => {
             if (!gameActive) return;
-            if (players[currentPlayer] === 'ai') return; // AI 턴에는 클릭 무시
+            if (players[currentPlayer] === 'ai') return; 
 
             const rect = canvas.getBoundingClientRect();
             const x = Math.round((e.clientX - rect.left - PADDING) / CELL_SIZE);
@@ -421,16 +464,13 @@
             placeStone(x, y);
         });
 
-        // 돌 놓기 (공통 로직)
         function placeStone(x, y) {
             if (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE) return;
             if (board[y][x] !== 0) return;
 
-            // 금수 체크 (흑돌만)
             if (currentPlayer === 1) {
                 const forbiddenType = checkForbidden(x, y, 1);
                 if (forbiddenType > 0) {
-                    // 사람이면 경고, AI면 이 함수 호출 전에 필터링됨
                     if (players[1] === 'human') {
                         showToast(`⚠️ ${forbiddenType === 33 ? '3-3' : '4-4'} 금수입니다!`);
                     }
@@ -438,14 +478,17 @@
                 }
             }
 
-            // 착수
             board[y][x] = currentPlayer;
-            drawBoard();
-            
-            // 마지막 수 표시 (선택적)
-            drawMarker(x, y);
 
-            // 승리 체크
+            animatingStone = {
+                x: x,
+                y: y,
+                player: currentPlayer,
+                startTime: Date.now()
+            };
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            drawBoard(); 
+
             if (checkWin(x, y, currentPlayer)) {
                 stopTimer();
                 showToast(`🎉 ${currentPlayer === 1 ? '흑돌' : '백돌'} 승리!`, true);
@@ -454,37 +497,27 @@
                 return;
             }
 
-            // 턴 변경
             currentPlayer = currentPlayer === 1 ? 2 : 1;
             updateStatus(currentPlayer === 1 ? "흑돌 차례입니다" : "백돌 차례입니다");
             
-            processTurn(); // 다음 턴 처리
-        }
-
-        function drawMarker(x, y) {
-            const centerX = PADDING + x * CELL_SIZE;
-            const centerY = PADDING + y * CELL_SIZE;
-            ctx.beginPath();
-            ctx.fillStyle = 'red';
-            ctx.arc(centerX, centerY, 3, 0, Math.PI*2);
-            ctx.fill();
+            processTurn(); 
         }
 
         // ==========================================
-        //  AI 로직 (간단한 휴리스틱)
+        //  AI 로직
         // ==========================================
         function makeAiMove() {
             if (!gameActive) return;
 
-            // 가능한 모든 수에 점수 매기기
             let bestScore = -Infinity;
             let bestMoves = [];
+            const center = Math.floor(BOARD_SIZE / 2);
 
             for (let y = 0; y < BOARD_SIZE; y++) {
                 for (let x = 0; x < BOARD_SIZE; x++) {
                     if (board[y][x] === 0) {
-                        // 흑돌 AI인 경우 금수 자리는 제외
                         if (currentPlayer === 1 && checkForbidden(x, y, 1) > 0) continue;
+                        if (!hasNeighbor(x, y) && (x!==center || y!==center)) continue;
 
                         const score = evaluatePosition(x, y, currentPlayer);
                         
@@ -499,63 +532,66 @@
             }
 
             if (bestMoves.length > 0) {
-                // 점수가 같은 곳 중 랜덤 선택
-                const move = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+                bestMoves.sort((a, b) => {
+                    const distA = Math.abs(a.x - center) + Math.abs(a.y - center);
+                    const distB = Math.abs(b.x - center) + Math.abs(b.y - center);
+                    return distA - distB;
+                });
+                
+                const move = bestMoves[0];
                 placeStone(move.x, move.y);
             } else {
-                // 둘 곳이 없으면 (거의 없겠지만) 무승부 또는 패배 처리
-                gameActive = false;
-                updateStatus("더 이상 둘 곳이 없습니다.");
+                placeStone(center, center);
             }
+        }
+
+        function hasNeighbor(x, y) {
+            const range = 2;
+            for(let dy=-range; dy<=range; dy++){
+                for(let dx=-range; dx<=range; dx++){
+                    if(dx===0 && dy===0) continue;
+                    const nx = x+dx, ny = y+dy;
+                    if(isValid(nx, ny) && board[ny][nx] !== 0) return true;
+                }
+            }
+            return false;
         }
 
         function evaluatePosition(x, y, color) {
             const opponent = color === 1 ? 2 : 1;
-            
-            // 공격 점수 (내 돌 연결)
             let attackScore = getLineScore(x, y, color);
-            
-            // 방어 점수 (상대 돌 막기) - 공격보다 약간 낮게 설정하여 이길 수 있으면 이기도록 함
             let defenseScore = getLineScore(x, y, opponent);
-
-            // 우선순위: 1. 내 승리(5) 2. 상대 승리 저지(5) 3. 내 4목 4. 상대 4목 저지 ...
-            // getLineScore가 10000점 이상이면 승리 확정 수
             
-            return attackScore + (defenseScore * 0.9); // 공격 우선
+            return attackScore + (defenseScore * 0.95); 
         }
 
         function getLineScore(x, y, color) {
             let totalScore = 0;
             const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
 
-            board[y][x] = color; // 가상 착수
+            board[y][x] = color; 
 
             for (let [dx, dy] of directions) {
                 const count = countConsecutive(x, y, dx, dy, color);
                 const openEnds = countOpenEnds(x, y, dx, dy, color, count);
 
-                if (count >= 5) totalScore += 100000; // 승리
+                if (count === 5) totalScore += 100000; // 정확히 5개 승리
+                else if (count > 5) totalScore -= 1000; // 6목 이상은 승리가 아님 (오히려 손해일 수 있음)
                 else if (count === 4) {
-                    if (openEnds >= 1) totalScore += 5000; // 4목 (한쪽이라도 뚫리면 위협)
-                    if (openEnds === 2) totalScore += 5000; // 양쪽 뚫린 4는 승리 확정급
+                    if (openEnds >= 1) totalScore += 5000;
+                    if (openEnds === 2) totalScore += 7000;
                 }
                 else if (count === 3) {
-                    if (openEnds === 2) totalScore += 1000; // 열린 3
+                    if (openEnds === 2) totalScore += 1000;
                     else if (openEnds === 1) totalScore += 100;
                 }
                 else if (count === 2) {
                     if (openEnds === 2) totalScore += 50;
                     else if (openEnds === 1) totalScore += 10;
                 }
-                else if (count === 1) {
-                     // 중앙에 가까울수록 가점
-                     const center = Math.floor(BOARD_SIZE / 2);
-                     const dist = Math.abs(x - center) + Math.abs(y - center);
-                     totalScore += (10 - dist); 
-                }
             }
 
-            board[y][x] = 0; // 복구
+            board[y][x] = 0; 
             return totalScore;
         }
 
@@ -577,36 +613,43 @@
 
         const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
 
+        function countConsecutive(x, y, dx, dy, color) {
+            let count = 1;
+            let i = 1;
+            // 방향 1 탐색 (제한 없음)
+            while (isValid(x + dx * i, y + dy * i) && board[y + dy * i][x + dx * i] === color) {
+                count++;
+                i++;
+            }
+            i = 1;
+            // 방향 2 탐색 (제한 없음)
+            while (isValid(x - dx * i, y - dy * i) && board[y - dy * i][x - dx * i] === color) {
+                count++;
+                i++;
+            }
+            return count;
+        }
+
         function checkWin(x, y, color) {
             for (let [dx, dy] of directions) {
-                let count = 1;
-                for (let i = 1; i < 5; i++) {
-                    const nx = x + dx * i, ny = y + dy * i;
-                    if (!isValid(nx, ny) || board[ny][nx] !== color) break;
-                    count++;
-                }
-                for (let i = 1; i < 5; i++) {
-                    const nx = x - dx * i, ny = y - dy * i;
-                    if (!isValid(nx, ny) || board[ny][nx] !== color) break;
-                    count++;
-                }
-                if (count === 5) return true;
+                // 정확히 5개일 때만 승리 (6목 이상은 승리 아님)
+                if (countConsecutive(x, y, dx, dy, color) === 5) return true;
             }
             return false;
         }
 
         function checkForbidden(x, y, color) {
             if (color !== 1) return 0; 
-            let threeCount = 0, fourCount = 0;
+            let threeCount = 0;
+
             board[y][x] = color;
             for (let [dx, dy] of directions) {
                 const lineInfo = getLineInfo(x, y, dx, dy, color);
                 if (lineInfo.isOpenThree) threeCount++;
-                if (lineInfo.isFour) fourCount++;
             }
             board[y][x] = 0;
-            if (fourCount >= 2) return 44;
-            if (threeCount >= 2) return 33;
+            
+            if (threeCount >= 2) return 33; 
             return 0;
         }
 
@@ -614,42 +657,24 @@
             let lineStr = "";
             for (let i = -4; i <= 4; i++) {
                 const nx = x + dx * i, ny = y + dy * i;
-                if (!isValid(nx, ny)) lineStr += "3";
-                else if (i === 0) lineStr += "1";
+                if (!isValid(nx, ny)) lineStr += "3"; 
+                else if (i === 0) lineStr += "1"; 
                 else {
                     const val = board[ny][nx];
                     lineStr += val === color ? "1" : (val === 0 ? "0" : "2");
                 }
             }
-            let isFour = false;
-            if (lineStr.includes("1111") && !lineStr.includes("11111")) isFour = true;
             
             const consecutive = countConsecutive(x, y, dx, dy, color);
             const openEnds = countOpenEnds(x, y, dx, dy, color, consecutive);
-            const gapFour = checkGapFour(lineStr); 
-
-            if (consecutive === 4) isFour = true;
-            if (gapFour) isFour = true;
-            if (consecutive >= 5) isFour = false;
 
             let isOpenThree = false;
-            if (consecutive === 3 && openEnds === 2 && lineStr.includes("01110")) isOpenThree = true;
+            if (consecutive === 3 && openEnds === 2) {
+                if (lineStr.includes("01110")) isOpenThree = true;
+            }
             if (checkGapThree(lineStr)) isOpenThree = true;
 
-            return { isFour, isOpenThree };
-        }
-
-        function countConsecutive(x, y, dx, dy, color) {
-            let count = 1;
-            for (let i = 1; i <= 4; i++) {
-                if (isValid(x + dx * i, y + dy * i) && board[y + dy * i][x + dx * i] === color) count++;
-                else break;
-            }
-            for (let i = 1; i <= 4; i++) {
-                if (isValid(x - dx * i, y - dy * i) && board[y - dy * i][x - dx * i] === color) count++;
-                else break;
-            }
-            return count;
+            return { isOpenThree };
         }
 
         function isValid(x, y) {
@@ -665,12 +690,6 @@
             while(isValid(x - dx*j, y - dy*j) && board[y-dy*j][x-dx*j] === color) j++;
             if (isValid(x - dx*j, y - dy*j) && board[y-dy*j][x-dx*j] === 0) opens++;
             return opens;
-        }
-
-        function checkGapFour(str) {
-            const p = str.substring(1, 8);
-            if (/11011/.test(str) || /11101/.test(str) || /10111/.test(str)) return true;
-            return false;
         }
 
         function checkGapThree(str) {
